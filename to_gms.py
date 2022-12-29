@@ -12,8 +12,8 @@ def inchi_to_gamess(input_inchi):
         return input_inchi, ""
     molecule:pybel.Molecule = pybel.readstring('inchi', input_inchi)
     molecule.make3D()
-    return input_inchi, molecule.write("inp")
+    return molecule.write("inp")
 
 if __name__ == "__main__":
     import sys
-    print(inchi_to_gamess(sys.argv[1]))
+    print(inchi_to_gamess(sys.argv))
