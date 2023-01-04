@@ -7,7 +7,7 @@ from utils import run_ff
 
 
 def run_simulations():
-    with open(pathlib.Path(__file__).parent / "ff_inputs_db.json") as f:
+    with open(pathlib.Path(__file__).parent / "data" / "ff_inputs_db.json") as f:
         ff_inputs_db = json.load(f)
         logfiles = []
         ff_inputs_db_sorted = sorted([(k, len(k), v) for k, v in ff_inputs_db.items()], key=lambda _: _[1])
@@ -20,12 +20,14 @@ def run_simulations():
                 app = "" if completed_ok else "_failed"
                 with open((pathlib.Path(__file__).parent / "data" / (str(i) + app)).with_suffix(".txt"), "w") as out_f:
                     out_f.write("\n".join((chem, str(time.monotonic() - start_time), *logfiles)))
-            except:
+            except Exception:
                 logging.exception("Exception thrown")
+            else:
+                print(f"{i} completed ok")
             for log in logfiles:
                 if "RAMAN" in log:
                     open("LOG", "w").write(log)
-            if i > 4:
+            if i > 100:
                 return
 
 

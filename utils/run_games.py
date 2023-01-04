@@ -59,6 +59,7 @@ CONFIG = """"
  $BASIS GBASIS=N31 NGAUSS=6 $END
 """
 
+
 # noinspection DuplicatedCode
 def calculate_hess(input_data, _dir):
     _run(_dir, f"""
@@ -80,7 +81,6 @@ def calculate_hess(input_data, _dir):
     return punch
 
 
-
 def calculate_raman(input_data, _dir, punch):
     _run(_dir, f"""
  $CONTRL SCFTYP=RHF MULT=1 NPRINT=0 COORD=UNIQUE
@@ -100,8 +100,10 @@ def calculate_raman(input_data, _dir, punch):
  $END
 	""")
 
+
 def clean_log_file(log_file):
     return log_file.split("     RUN TITLE", 1)[1]
+
 
 def run_with_input(input_data, raise_error=False):
     input_data = input_data[input_data.find("$DATA") + 5:input_data.rfind("$END")]
@@ -111,7 +113,7 @@ def run_with_input(input_data, raise_error=False):
         try:
             punch = calculate_hess(input_data, _dir)
             calculate_raman(input_data, _dir, punch)
-        except:
+        except Exception:
             completed_ok = False
             if raise_error:
                 raise
