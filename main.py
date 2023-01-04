@@ -3,9 +3,7 @@ import logging
 import pathlib
 import time
 
-import run_ff
-import run_games
-from to_gms import inchi_to_gamess
+from utils import run_ff
 
 
 def run_simulations():

@@ -7,7 +7,7 @@ import tempfile
 import uuid
 import platform
 
-ff_path = "C:\\Users\\comp1\\Desktop\\ff820_windows\\Firefly820.exe"
+ff_path = pathlib.Path(__file__).parent.parent / "ff" / "Firefly820.exe"
 if platform.system() == "Linux":
 	ff_path = (pathlib.Path(__file__).parent / "ff_linux" / "firefly820").absolute()
 

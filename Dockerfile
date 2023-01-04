@@ -16,6 +16,7 @@ RUN ln -s /usr/include/openbabel3 /usr/local/include/openbabel3
 WORKDIR /app
 COPY requirements.txt requirements.txt
 RUN pip3 install -r requirements.txt
+COPY ../ff/ff_linux .
 COPY . .
 
 CMD [ "python3", "aws.py"]

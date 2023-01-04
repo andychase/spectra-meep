@@ -38,7 +38,7 @@ def get_file_by_chem_name(chem_name):
     pathlib.Path(db_path / db.lower() / str(_id))
 
 def generate_ff_inputs():
-    from to_gms import inchi_to_gamess
+    from inchi_to_gamess_format import inchi_to_gamess
     import multiprocessing
     s = {}
     db = get_ref_db()
@@ -48,4 +48,4 @@ def generate_ff_inputs():
         for chem, r in res:
             s[chem] = r
     import json
-    json.dump(s, open("ff_inputs_db.json", "w"))
+    json.dump(s, open("../data/ff_inputs_db.json", "w"))

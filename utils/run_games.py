@@ -6,7 +6,7 @@ import sys
 import tempfile
 import uuid
 
-gamess_path = pathlib.Path("C:\\Users\\Public\\gamess-64")
+gamess_path = pathlib.Path(__file__).parent.parent / "gamess"
 
 
 class FFException(Exception):
