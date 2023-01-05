@@ -1,3 +1,13 @@
-from main import run_simulations
+import pathlib
+import subprocess
+import time
+import dotenv
 
-run_simulations()
+dotenv.load_dotenv()
+
+# Connect to database and get job
+q = """
+SELECT FOR UPDATE
+    
+"""
+# If last active > 10 minutes ago

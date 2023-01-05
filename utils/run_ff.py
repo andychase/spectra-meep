@@ -113,27 +113,28 @@ def calculate_raman(input_data, _dir, vec_data, hess_data, config_args=()):
 def run_with_input(input_data, raise_error=False, config_args=()):
     input_data = input_data[input_data.find("$DATA") + 5:input_data.rfind("$END")]
     completed_ok = True
-    with tempfile.TemporaryDirectory() as scratch_dir:
-        _dir = pathlib.Path(scratch_dir)
+    scratch_dir = "/tmp/spectra_meep"
+    _dir = pathlib.Path(scratch_dir)
+    _dir.mkdir(parents=True, exist_ok=True)
+    try:
         try:
-            try:
-                hess_data, vec_data = calculate_hess(input_data, _dir)
-                calculate_raman(input_data, _dir, vec_data, hess_data)
-            except FFBasisException:
-                if config_args == ():
-                    return run_with_input(input_data, raise_error, config_args=("N31",))
-                else:
-                    raise
-        except FFKnownException as e:
-            completed_ok = False
-            print(*e.args)
-            if raise_error:
+            hess_data, vec_data = calculate_hess(input_data, _dir)
+            calculate_raman(input_data, _dir, vec_data, hess_data)
+        except FFBasisException:
+            if config_args == ():
+                return run_with_input(input_data, raise_error, config_args=("N31",))
+            else:
                 raise
-        except Exception:
-            completed_ok = False
-            if raise_error:
-                raise
-            logging.exception("Firefly failed")
-        punch_files = [open(f).read() for f in _dir.glob("PUNCH*")]
-        log_files = [open(f).read() for f in _dir.glob("LOGFILE*")]
-        return completed_ok, punch_files, log_files
+    except FFKnownException as e:
+        completed_ok = False
+        print(*e.args)
+        if raise_error:
+            raise
+    except Exception:
+        completed_ok = False
+        if raise_error:
+            raise
+        logging.exception("Firefly failed")
+    punch_files = [open(f).read() for f in _dir.glob("PUNCH*")]
+    log_files = [open(f).read() for f in _dir.glob("LOGFILE*")]
+    return completed_ok, punch_files, log_files

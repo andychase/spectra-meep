@@ -3,3 +3,4 @@ openbabel
 joblib
 numpy
 matplotlib
+python-dotenv
