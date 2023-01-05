@@ -1,8 +1,6 @@
 from openbabel import pybel
 import os
 
-os.environ["BABEL_DATADIR"] = "C:\\Users\\comp1\\.conda\\envs\\spectra_meep\\share\\openbabel"
-
 
 # Create an Open Babel molecule from an InChI string
 def inchi_to_gamess(input_inchi):

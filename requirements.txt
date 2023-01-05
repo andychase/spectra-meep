@@ -4,3 +4,5 @@ joblib
 numpy
 matplotlib
 python-dotenv
+psycopg
+boto3

@@ -5,6 +5,13 @@ import sys
 import time
 
 from utils import run_ff
+from utils.inchi_to_gamess_format import inchi_to_gamess
+
+
+def run_single(chem):
+    ff_input = inchi_to_gamess(chem)
+    completed_ok, punch_files, logfiles = run_ff.run_with_input(ff_input)
+    return completed_ok
 
 
 def run_simulations(i):
@@ -30,7 +37,6 @@ def run_simulations(i):
 
 if __name__ == "__main__":
     run_simulations(int(sys.argv[1]))
-
 
 # Get reference spectra
 # Generate Raman Spectra from Simulator

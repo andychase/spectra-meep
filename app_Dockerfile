@@ -1,6 +1,0 @@
-# syntax=docker/dockerfile:1
-
-FROM andychase/base_python_sm
-COPY . .
-
-CMD [ "python3", "main.py", "53"]
