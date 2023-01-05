@@ -7,7 +7,7 @@ import dotenv
 import psycopg
 
 import main
-from utils.run_ff import compress_and_clean_dir
+from utils.run_utils import compress_and_clean_dir
 
 dotenv.load_dotenv(".env")
 
@@ -100,5 +100,4 @@ def aws_loop():
 
 
 if __name__ == "__main__":
-    while True:
-        aws_loop()
+    aws_loop()

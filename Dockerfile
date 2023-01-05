@@ -15,6 +15,7 @@ RUN dpkg --add-architecture i386 && \
     swig \
     swapspace \
     libpq-dev \
+    csh gfortran libatlas-base-dev libxc-dev curl cmake \
     libc6:i386 libncurses5:i386 libstdc++6:i386
 
 RUN ln -s /usr/include/openbabel3 /usr/local/include/openbabel3

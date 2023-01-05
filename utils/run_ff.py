@@ -109,7 +109,7 @@ def calculate_raman(input_data, _dir, vec_data, hess_data, config_args=()):
  $HESS
 {hess_data.strip()}
  $END
- """)
+""")
 
 
 def run_with_input(input_data, raise_error=False, config_args=()):
@@ -127,11 +127,6 @@ def run_with_input(input_data, raise_error=False, config_args=()):
                 return run_with_input(input_data, raise_error, config_args=("N31",))
             else:
                 raise
-    except FFKnownException as e:
-        completed_ok = False
-        print(*e.args)
-        if raise_error:
-            raise
     except Exception:
         completed_ok = False
         if raise_error:
@@ -140,17 +135,3 @@ def run_with_input(input_data, raise_error=False, config_args=()):
     punch_files = [open(f).read() for f in _dir.glob("PUNCH*")]
     log_files = [open(f).read() for f in _dir.glob("LOGFILE*")]
     return completed_ok, punch_files, log_files
-
-
-def compress_and_clean_dir():
-    scratch_dir = "/tmp/spectra_meep"
-    _dir = pathlib.Path(scratch_dir)
-    gz_path = _dir.parent / "output.tar.gz"
-    subprocess.check_call(["tar", "czvf", gz_path, _dir])
-    for _dirs in pathlib.Path("/tmp").glob("spectra*"):
-        if _dirs.is_dir():
-            shutil.rmtree(_dirs)
-        else:
-            _dirs.unlink(missing_ok=True)
-    yield gz_path
-    gz_path.unlink(missing_ok=True)
