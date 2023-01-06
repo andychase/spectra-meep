@@ -26,6 +26,10 @@ class FFBasisException(FFKnownException):
     pass
 
 
+class FFBadMultException(FFKnownException):
+    pass
+
+
 def _run(_dir, _input):
     punch_file = _dir / "PUNCH"
     irc_file = _dir / "IRCDATA"

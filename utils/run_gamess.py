@@ -4,10 +4,9 @@ import pathlib
 import shutil
 import subprocess
 import sys
-import tempfile
 import uuid
 
-from utils.run_ff import FFException, FFKnownException, FFBasisException
+from utils.run_ff import FFException, FFKnownException, FFBasisException, FFBadMultException
 
 gamess_path = pathlib.Path(__file__).parent.parent / "gamess_linux"
 
@@ -18,6 +17,11 @@ def _run(_dir, _input):
     scratch = _dir / "scratch"
     input_dir = _dir / "inputs"
     output_dir = _dir / "outputs"
+    os.environ.update({
+        'SCR': str(restart.absolute()),
+        'USERSCR': str(restart.absolute()),
+        'GMSPATH': str(gamess_path.absolute())
+    })
     [_.mkdir(exist_ok=True) for _ in (restart, scratch, input_dir, output_dir)]
     input_file = input_dir / "input.inp"
     logfile = output_dir / f"LOGFILE_{uuid.uuid4()}"
@@ -38,7 +42,7 @@ SCRATCHDIR={scratch.absolute()}
     with open(logfile, "w") as f:
         subprocess.run(
             [
-                "csh", gamess_path / "rungms", input_file, "2022.2", cpus, "1", "1"
+                "csh", gamess_path / "rungms", input_file, "2022.2", cpus, "1", "0"
             ],
             check=True,
             stdout=f,
@@ -47,6 +51,8 @@ SCRATCHDIR={scratch.absolute()}
         )
     with open(logfile) as f:
         log = f.read()
+        if "CHECK YOUR INPUT CHARGE AND MULTIPLICITY" in log:
+            raise FFBadMultException("Bad mult")
         if "SCF DOES NOT CONVERGE AT VIB0 POINT" in log:
             raise FFKnownException(f"Did not converge")
         if "ERROR, ILLEGAL POINT GROUP" in log:
@@ -71,9 +77,9 @@ def get_config(gbasis="N311"):
 
 
 # noinspection DuplicatedCode
-def calculate_hess(input_data, _dir, config_args=()):
+def calculate_hess(input_data, _dir, config_args=(), mult=1):
     _run(_dir, f"""
- $CONTRL SCFTYP=RHF MULT=1 NPRINT=0 COORD=UNIQUE
+ $CONTRL SCFTYP=RHF MULT={mult} NPRINT=0 COORD=UNIQUE
  RUNTYP=OPTIMIZE ICUT=12 ITOL=25 DFTTYP=B3LYP NOSYM=1
  $END
  {get_config(*config_args)}
@@ -91,9 +97,9 @@ def calculate_hess(input_data, _dir, config_args=()):
     return punch
 
 
-def calculate_raman(input_data, _dir, punch, config_args=()):
+def calculate_raman(input_data, _dir, punch, config_args=(), mult=1):
     _run(_dir, f"""
- $CONTRL SCFTYP=RHF MULT=1 NPRINT=0 COORD=UNIQUE
+ $CONTRL SCFTYP=RHF MULT={mult} NPRINT=0 COORD=UNIQUE
  RUNTYP=RAMAN ICUT=12 ITOL=25
  $END
  {get_config(*config_args)}
@@ -111,22 +117,23 @@ def calculate_raman(input_data, _dir, punch, config_args=()):
 """)
 
 
-def run_with_input(input_data, raise_error=False, config_args=()):
+def run_with_input(input_data, _dir:pathlib.Path, raise_error=False, config_args=(), mult=1):
+    if not _dir.exists():
+        _dir.mkdir(parents=True)
     input_data = input_data[input_data.find("$DATA") + 5:input_data.rfind("$END")]
-    completed_ok = True
-    _dir = pathlib.Path("/tmp/spectra_meep")
-    if _dir.exists():
-        shutil.rmtree(_dir)
-    _dir.mkdir(parents=True, exist_ok=True)
-
     completed_ok = True
     try:
         try:
-            punch = calculate_hess(input_data, _dir)
-            calculate_raman(input_data, _dir, punch)
+            punch = calculate_hess(input_data, _dir, config_args, mult)
+            calculate_raman(input_data, _dir, punch, config_args, mult)
         except FFBasisException:
             if config_args == ():
-                return run_with_input(input_data, raise_error, config_args=("N31",))
+                return run_with_input(input_data, _dir, raise_error, config_args=("N31",), mult=mult)
+            else:
+                raise
+        except FFBadMultException:
+            if mult == 1:
+                return run_with_input(input_data, _dir, raise_error, config_args, mult=2)
             else:
                 raise
     except FFKnownException:

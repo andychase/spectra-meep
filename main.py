@@ -8,9 +8,9 @@ from utils import run_gamess
 from utils.inchi_to_gamess_format import inchi_to_gamess
 
 
-def run_single(chem):
+def run_single(chem, _dir):
     ff_input = inchi_to_gamess(chem)
-    completed_ok, punch_files, logfiles = run_gamess.run_with_input(ff_input)
+    completed_ok, punch_files, logfiles = run_gamess.run_with_input(ff_input, _dir)
     return completed_ok
 
 
@@ -22,7 +22,8 @@ def run_simulations(i):
         (chem, chem_len, ff_input) = ff_inputs_db_sorted[i]
         try:
             start_time = time.monotonic()
-            completed_ok, punch_files, logfiles = run_gamess.run_with_input(ff_input)
+            _dir = pathlib.Path("/tmp/spectra_meep")
+            completed_ok, punch_files, logfiles = run_gamess.run_with_input(ff_input, _dir)
             app = "" if completed_ok else "_failed"
             with open((pathlib.Path(__file__).parent / "data" / (str(i) + app)).with_suffix(".txt"), "w") as out_f:
                 out_f.write("\n".join((chem, str(time.monotonic() - start_time), *logfiles)))

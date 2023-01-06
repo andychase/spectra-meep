@@ -1,23 +1,14 @@
 import multiprocessing
 import os
+import pathlib
+import tempfile
 import uuid
 
 import boto3
-import dotenv
-import psycopg
 
 import main
+from utils.db import with_conn, get_s3_client
 from utils.run_utils import compress_and_clean_dir
-
-dotenv.load_dotenv(".env")
-
-conn_config = dict(
-    host=os.environ['POSTGRES_HOST'],
-    port=5432,
-    dbname=os.environ['POSTGRES_DB'],
-    user=os.environ['POSTGRES_USERNAME'],
-    password=os.environ['POSTGRES_PASSWORD']
-)
 
 
 def update_time(cur, name):
@@ -28,20 +19,12 @@ def update_time(cur, name):
     """, (name,))
 
 
-def with_conn():
-    with psycopg.connect(autocommit=True, **conn_config) as conn:
-        cur = conn.cursor()
-        with conn.transaction():
-            yield cur
-
-
-def aws_loop():
+def aws_loop(_dir):
     # Connect to database and get job
     name = None
     for cur in with_conn():
         cur.execute("""
             SELECT name, save_uuid
-            
             from meepdb.chem c
             where (
                     last_activity is null or
@@ -50,31 +33,30 @@ def aws_loop():
               and is_done is FALSE
             order by name_length
             limit 1 FOR UPDATE;
-            """
-                    )
+            """)
         result = cur.fetchone()
         if not result:
             raise Exception("No result set returned!")
         name, save_uuid = result
+        print("----~~~----")
+        print(name)
+        print("----~~~----")
         # Set last_activity to lock it
         update_time(cur, name)
 
-    p = multiprocessing.Process(target=main.run_single, args=(name,))
+    p = multiprocessing.Process(target=main.run_single, args=(name, _dir))
     p.start()
-    p.join(60)
-    with psycopg.connect(autocommit=True, **conn_config) as conn:
-        cur = conn.cursor()
-        with conn.transaction():
+    while True:
+        p.join(60)
+        for cur in with_conn():
             update_time(cur, name)
+        if not p.is_alive():
+            break
 
     # On completion
     save_uuid = str(uuid.uuid4())
-    for gz_path in compress_and_clean_dir():
-        s3_client = boto3.client(
-            's3',
-            aws_access_key_id=os.environ['AWS_USERNAME'],
-            aws_secret_access_key=os.environ['AWS_PASSWORD']
-        )
+    for gz_path in compress_and_clean_dir(_dir):
+        s3_client = get_s3_client()
         s3_client.upload_file(gz_path, "spectrameep", save_uuid + ".tar.gz")
     for cur in with_conn():
         cur.execute("""
@@ -100,4 +82,4 @@ def aws_loop():
 
 
 if __name__ == "__main__":
-    aws_loop()
+    aws_loop(pathlib.Path("/tmp/spectra_meep"))

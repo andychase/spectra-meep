@@ -3,9 +3,7 @@ import shutil
 import subprocess
 
 
-def compress_and_clean_dir():
-    scratch_dir = "/tmp/spectra_meep"
-    _dir = pathlib.Path(scratch_dir)
+def compress_and_clean_dir(_dir):
     gz_path = _dir.parent / "output.tar.gz"
     subprocess.check_call(["tar", "czf", gz_path, _dir])
     for _dirs in pathlib.Path("/tmp").glob("spectra*"):
