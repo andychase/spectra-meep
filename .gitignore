@@ -2,4 +2,4 @@
 /.idea/
 /ff_linux
 /gamess_linux
-/.env
+/src/.env

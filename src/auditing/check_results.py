@@ -1,9 +1,8 @@
-import csv
 from tarfile import TarFile
 
 import tqdm
 
-from utils.db import with_conn, get_s3_client
+from src.utils.db import with_conn, get_s3_client
 import io
 
 

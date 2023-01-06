@@ -1,6 +1,10 @@
 # syntax=docker/dockerfile:1
 
 FROM python:3.8-slim-bullseye
+WORKDIR /app
+
+COPY ff_linux ff_linux
+COPY gamess_linux gamess_linux
 
 RUN dpkg --add-architecture i386 && \
     apt-get update &&  \
@@ -18,10 +22,9 @@ RUN dpkg --add-architecture i386 && \
 
 RUN ln -s /usr/include/openbabel3 /usr/local/include/openbabel3
 
-WORKDIR /app
-COPY requirements.txt requirements.txt
-RUN pip3 install -r requirements.txt
+COPY src/requirements.txt src/requirements.txt
+RUN pip3 install -r src/requirements.txt
 
-COPY . .
+COPY src src
 
-CMD [ "python3", "aws.py"]
+CMD [ "python3", "./src/aws.py"]

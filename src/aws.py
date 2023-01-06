@@ -1,10 +1,6 @@
 import multiprocessing
-import os
 import pathlib
-import tempfile
 import uuid
-
-import boto3
 
 import main
 from utils.db import with_conn, get_s3_client
@@ -52,7 +48,7 @@ def aws_loop(_dir):
             update_time(cur, name)
         if not p.is_alive():
             break
-
+    completed_ok = p.exitcode == 0
     # On completion
     save_uuid = str(uuid.uuid4())
     for gz_path in compress_and_clean_dir(_dir):
@@ -64,10 +60,11 @@ def aws_loop(_dir):
                 set 
                     last_activity = now(),
                     is_done = TRUE,
-                    save_uuid = %s
+                    save_uuid = %s,
+                    completed_ok = %s
                 
                 where name = %s
-            """, (save_uuid, name))
+            """, (save_uuid, completed_ok, name))
 
     # If there's a save uuid, pull it
 

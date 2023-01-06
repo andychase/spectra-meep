@@ -9,9 +9,9 @@ import uuid
 import uuid
 import platform
 
-ff_path = pathlib.Path(__file__).parent.parent / "ff" / "Firefly820.exe"
+ff_path = pathlib.Path(__file__).parent.parent.parent / "ff" / "Firefly820.exe"
 if platform.system() == "Linux":
-    ff_path = (pathlib.Path(__file__).parent.parent / "ff_linux" / "firefly820").absolute()
+    ff_path = (pathlib.Path(__file__).parent.parent.parent / "ff_linux" / "firefly820").absolute()
 
 
 class FFException(Exception):

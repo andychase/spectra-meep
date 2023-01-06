@@ -4,7 +4,7 @@ import re
 from functools import cache
 
 
-db_path = pathlib.Path(__file__).parent.parent / "db"
+db_path = pathlib.Path(__file__).parent.parent.parent / "db"
 ref_db_path = db_path / "meta" / "combined_metadata.csv"
 
 db_cols = {k: i for i, k in enumerate(
@@ -48,4 +48,4 @@ def generate_ff_inputs():
         for chem, r in res:
             s[chem] = r
     import json
-    json.dump(s, open("../data/ff_inputs_db.json", "w"))
+    json.dump(s, open("../../data/ff_inputs_db.json", "w"))

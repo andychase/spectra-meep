@@ -8,7 +8,7 @@ import uuid
 
 from utils.run_ff import FFException, FFKnownException, FFBasisException, FFBadMultException
 
-gamess_path = pathlib.Path(__file__).parent.parent / "gamess_linux"
+gamess_path = pathlib.Path(__file__).parent.parent.parent / "gamess_linux"
 
 
 def _run(_dir, _input):
@@ -59,6 +59,8 @@ SCRATCHDIR={scratch.absolute()}
             raise FFKnownException(f"Bad point group")
         if "ILLEGAL EXTENDED BASIS FUNCTION REQUESTED" in log:
             raise FFBasisException(f"Bad basis function")
+        if "ILLEGAL          BASIS FUNCTION REQUESTED" in log:
+            raise FFBasisException(f"Bad basis function")
         if "EXECUTION OF GAMESS TERMINATED -ABNORMALLY-" in log:
             raise FFException(f"Error running gamess: {log[log.find('ERROR'):]}")
 
@@ -69,7 +71,7 @@ def extract_field_from_output(name, punch):
     return vec_data
 
 
-def get_config(gbasis="N311"):
+def get_config(gbasis="CCD"):
     return f"""
  $SYSTEM MWORDS=100 $END
  $BASIS GBASIS={gbasis} NGAUSS=6 $END
@@ -79,18 +81,15 @@ def get_config(gbasis="N311"):
 # noinspection DuplicatedCode
 def calculate_hess(input_data, _dir, config_args=(), mult=1):
     _run(_dir, f"""
- $CONTRL SCFTYP=RHF MULT={mult} NPRINT=0 COORD=UNIQUE
- RUNTYP=OPTIMIZE ICUT=12 ITOL=25 DFTTYP=B3LYP NOSYM=1
+ $CONTRL SCFTYP=RHF MULT={mult} NPRINT=0 COORD=CART UNITS=ANGS
+ RUNTYP=OPTIMIZE ICUT=12 ITOL=25 DFTTYP=B3LYP NOSYM=1 {'ISPHER=1' if not config_args else ''}
  $END
  {get_config(*config_args)}
  $FORCE METHOD=NUMERIC VIBANL=.TRUE. PURIFY=.t. NVIB=2 $END
  $SCF DIRSCF=.TRUE. $END
  $CPHF CPHF=AO $END
  $STATPT OPTTOL=1e-6 NSTEP=200 HESS=CALC IHREP=0 HSSEND=.TRUE. $END
- $DATA
-
-{input_data.strip()}
- $END
+{input_data}
 """)
 
     punch = "\n".join(open(_).read() for _ in (_dir / "restart").glob("*.dat"))
@@ -99,15 +98,12 @@ def calculate_hess(input_data, _dir, config_args=(), mult=1):
 
 def calculate_raman(input_data, _dir, punch, config_args=(), mult=1):
     _run(_dir, f"""
- $CONTRL SCFTYP=RHF MULT={mult} NPRINT=0 COORD=UNIQUE
- RUNTYP=RAMAN ICUT=12 ITOL=25
+ $CONTRL SCFTYP=RHF MULT={mult} NPRINT=0 COORD=UNIQUE COORD=CART UNITS=ANGS
+ RUNTYP=RAMAN ICUT=12 ITOL=25 {'ISPHER=1' if not config_args else ''}
  $END
  {get_config(*config_args)}
  $RAMAN EFIELD=0.002 $END
- $DATA
-
-{input_data.strip()}
- $END
+{input_data}
  $VEC
  {extract_field_from_output("$VEC", punch).strip()}
  $END
@@ -117,18 +113,18 @@ def calculate_raman(input_data, _dir, punch, config_args=(), mult=1):
 """)
 
 
-def run_with_input(input_data, _dir:pathlib.Path, raise_error=False, config_args=(), mult=1):
+def run_with_input(raw_input_data, _dir: pathlib.Path, raise_error=False, config_args=(), mult=1):
     if not _dir.exists():
         _dir.mkdir(parents=True)
-    input_data = input_data[input_data.find("$DATA") + 5:input_data.rfind("$END")]
+    input_data = raw_input_data[raw_input_data.find(" $DATA"):raw_input_data.rfind(" $END") + 5]
     completed_ok = True
     try:
         try:
-            punch = calculate_hess(input_data, _dir, config_args, mult)
-            calculate_raman(input_data, _dir, punch, config_args, mult)
+            punch = calculate_hess(raw_input_data, _dir, config_args, mult)
+            calculate_raman(raw_input_data, _dir, punch, config_args, mult)
         except FFBasisException:
             if config_args == ():
-                return run_with_input(input_data, _dir, raise_error, config_args=("N31",), mult=mult)
+                return run_with_input(input_data, _dir, raise_error, config_args=("STO",), mult=mult)
             else:
                 raise
         except FFBadMultException:
