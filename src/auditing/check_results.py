@@ -37,13 +37,8 @@ def find_bad_mult():
 
 
 def main():
-    for cur in with_conn():
-        for mult in find_bad_mult():
-            print(f"Fixing {mult}")
-            cur.execute("""
-            update meepdb.chem 
-            set is_done = FALSE
-            where name = %s""", (mult,))
+    for mult in find_bad_mult():
+        print(f"Bad mult {mult}")
 
 
 if __name__ == "__main__":

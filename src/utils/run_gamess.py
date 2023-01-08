@@ -57,9 +57,7 @@ SCRATCHDIR={scratch.absolute()}
             raise FFKnownException(f"Did not converge")
         if "ERROR, ILLEGAL POINT GROUP" in log:
             raise FFKnownException(f"Bad point group")
-        if "ILLEGAL EXTENDED BASIS FUNCTION REQUESTED" in log:
-            raise FFBasisException(f"Bad basis function")
-        if "ILLEGAL          BASIS FUNCTION REQUESTED" in log:
+        if " BASIS FUNCTION REQUESTED" in log:
             raise FFBasisException(f"Bad basis function")
         if "EXECUTION OF GAMESS TERMINATED -ABNORMALLY-" in log:
             raise FFException(f"Error running gamess: {log[log.find('ERROR'):]}")
@@ -79,9 +77,9 @@ def get_config(gbasis="CCD"):
 
 
 # noinspection DuplicatedCode
-def calculate_hess(input_data, _dir, config_args=(), mult=1):
+def calculate_hess(input_data, _dir, config_args=(), add_charge=False):
     _run(_dir, f"""
- $CONTRL SCFTYP=RHF MULT={mult} NPRINT=0 COORD=CART UNITS=ANGS
+ $CONTRL SCFTYP=RHF MULT=1 NPRINT=0 COORD=CART UNITS=ANGS {'ICHARG=1' if add_charge else ''}
  RUNTYP=OPTIMIZE ICUT=12 ITOL=25 DFTTYP=B3LYP NOSYM=1 {'ISPHER=1' if not config_args else ''}
  $END
  {get_config(*config_args)}
@@ -96,9 +94,9 @@ def calculate_hess(input_data, _dir, config_args=(), mult=1):
     return punch
 
 
-def calculate_raman(input_data, _dir, punch, config_args=(), mult=1):
+def calculate_raman(input_data, _dir, punch, config_args=(), add_charge=False):
     _run(_dir, f"""
- $CONTRL SCFTYP=RHF MULT={mult} NPRINT=0 COORD=UNIQUE COORD=CART UNITS=ANGS
+ $CONTRL SCFTYP=RHF MULT=1 NPRINT=0 COORD=UNIQUE COORD=CART UNITS=ANGS {'ICHARG=1' if add_charge else ''}
  RUNTYP=RAMAN ICUT=12 ITOL=25 {'ISPHER=1' if not config_args else ''}
  $END
  {get_config(*config_args)}
@@ -113,23 +111,23 @@ def calculate_raman(input_data, _dir, punch, config_args=(), mult=1):
 """)
 
 
-def run_with_input(raw_input_data, _dir: pathlib.Path, raise_error=False, config_args=(), mult=1):
+def run_with_input(raw_input_data, _dir: pathlib.Path, raise_error=False, config_args=(), add_charge=False):
     if not _dir.exists():
         _dir.mkdir(parents=True)
     input_data = raw_input_data[raw_input_data.find(" $DATA"):raw_input_data.rfind(" $END") + 5]
     completed_ok = True
     try:
         try:
-            punch = calculate_hess(raw_input_data, _dir, config_args, mult)
-            calculate_raman(raw_input_data, _dir, punch, config_args, mult)
+            punch = calculate_hess(raw_input_data, _dir, config_args, add_charge)
+            calculate_raman(raw_input_data, _dir, punch, config_args, add_charge)
         except FFBasisException:
             if config_args == ():
-                return run_with_input(input_data, _dir, raise_error, config_args=("STO",), mult=mult)
+                return run_with_input(input_data, _dir, raise_error, config_args=("STO",), add_charge=add_charge)
             else:
                 raise
         except FFBadMultException:
-            if mult == 1:
-                return run_with_input(input_data, _dir, raise_error, config_args, mult=2)
+            if add_charge is False:
+                return run_with_input(input_data, _dir, raise_error, config_args, add_charge=True)
             else:
                 raise
     except FFKnownException:

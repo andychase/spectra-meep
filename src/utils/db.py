@@ -4,6 +4,7 @@ import pathlib
 import boto3
 import dotenv
 import psycopg
+from botocore.config import Config
 
 dotenv.load_dotenv(pathlib.Path(__file__).parent.parent / ".env")
 
@@ -24,8 +25,9 @@ def with_conn():
 
 
 def get_s3_client():
-    return boto3.client(
-        's3',
+    s = boto3.Session(
         aws_access_key_id=os.environ['AWS_USERNAME'],
         aws_secret_access_key=os.environ['AWS_PASSWORD']
     )
+    client = s.client('s3', config=Config(tcp_keepalive=True))
+    return client
