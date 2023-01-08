@@ -1,0 +1,72 @@
+#!/bin/csh -f
+ 
+#   Compilation configuration for GAMESS
+#   Generated on 64126d28569c
+#   Generated at Sun Jan  8 21:34:44 UTC 2023
+ 
+#                 GAMESS Paths                     #
+setenv GMS_PATH              /app/gamess_linux
+setenv GMS_BUILD_DIR         /app/gamess_linux
+ 
+#                  Machine Type                    #
+setenv GMS_TARGET            linux64
+setenv GMS_HPC_SYSTEM_TARGET generic
+ 
+#              FORTRAN Compiler Setup              #
+setenv GMS_FORTRAN           gfortran
+setenv GMS_GFORTRAN_VERNO    10.2
+ 
+#         Mathematical Library Setup               #
+setenv GMS_MATHLIB           atlas
+setenv GMS_MATHLIB_PATH      /usr/lib/aarch64-linux-gnu/atlas/
+setenv GMS_LAPACK_LINK_LINE  ""
+#         parallel message passing model setup
+setenv GMS_DDI_COMM          sockets
+ 
+#     Michigan State University Coupled Cluster    #
+setenv GMS_MSUCC             false
+ 
+#         LIBCCHEM CPU/GPU Code Interface          #
+setenv GMS_LIBCCHEM          false
+ 
+#      Intel Xeon Phi Build: none/knc/knl          #
+setenv GMS_PHI               none
+ 
+#         Shared Memory Type: sysv/posix           #
+setenv GMS_SHMTYPE           sysv
+ 
+#      GAMESS OpenMP support: true/false           #
+setenv GMS_OPENMP            false
+ 
+#      GAMESS LibXC library: true/false            #
+setenv GMS_LIBXC             true
+ 
+#      GAMESS MDI library: true/false              #
+setenv GMS_MDI               false
+ 
+#       VM2 library: true/false                    #
+setenv  GMS_VM2              false
+ 
+#       Tinker: true/false                         #
+setenv  TINKER               false
+ 
+#       VB2000: true/false                         #
+setenv  VB2000               false
+ 
+#       XMVB: true/false                           #
+setenv  XMVB                 false
+ 
+#       NEO: true/false                            #
+setenv  NEO                  true
+ 
+#       NBO: true/false                            #
+setenv  NBO                  true
+setenv  NBOLIB               no
+ 
+####################################################
+# Added any additional environmental variables or  #
+# module loads below if needed.                    #
+####################################################
+# Capture floating-point exceptions                #
+setenv GMS_FPE_FLAGS        ''
+ 

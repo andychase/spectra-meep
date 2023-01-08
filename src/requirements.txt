@@ -1,5 +1,4 @@
 jcamp
-openbabel
 joblib
 numpy
 matplotlib
