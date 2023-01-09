@@ -18,9 +18,10 @@ def update_time(cur, name):
 def aws_loop(_dir):
     # Connect to database and get job
     name = None
+    gms_input = None
     for cur in with_conn():
         cur.execute("""
-            SELECT name, save_uuid
+            SELECT name, save_uuid, gms_input
             from meepdb.chem c
             where (
                     last_activity is null or
@@ -33,14 +34,14 @@ def aws_loop(_dir):
         result = cur.fetchone()
         if not result:
             raise Exception("No result set returned!")
-        name, save_uuid = result
+        name, save_uuid, gms_input = result
         print("----~~~----")
         print(name)
         print("----~~~----")
         # Set last_activity to lock it
         update_time(cur, name)
 
-    p = multiprocessing.Process(target=main.run_single, args=(name, _dir))
+    p = multiprocessing.Process(target=main.run_single, args=(gms_input, _dir))
     p.start()
     while True:
         p.join(60)

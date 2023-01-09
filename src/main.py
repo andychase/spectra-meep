@@ -5,9 +5,8 @@ from utils import run_gamess
 from utils.inchi_to_gamess_format import inchi_to_gamess
 
 
-def run_single(chem, _dir):
-    ff_input = inchi_to_gamess(chem)
-    completed_ok, punch_files, logfiles = run_gamess.run_with_input(ff_input, _dir)
+def run_single(gms_input, _dir):
+    completed_ok, punch_files, logfiles = run_gamess.run_with_input(gms_input, _dir)
     exit(0 if completed_ok else 1)
 
 

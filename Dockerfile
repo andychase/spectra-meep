@@ -1,5 +1,3 @@
-# syntax=docker/dockerfile:1
-
 FROM python:3.8-slim-bullseye
 WORKDIR /app
 
@@ -16,7 +14,7 @@ RUN apt-get update &&  \
 WORKDIR /app/gamess_linux
 RUN bash -c '[ $(arch) == "aarch64" ] && mv install.arm64.info install.info'
 RUN make clean
-RUN make libxc -j$(nproc)
+RUN make libxc -j4
 RUN make modules
 RUN make
 WORKDIR /app
