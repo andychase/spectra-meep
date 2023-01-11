@@ -14,6 +14,6 @@ sed -i 's/uname -p/uname -m/g' ./ddi/compddi
 csh ./ddi/compddi
 cp ./ddi/ddikick.x .
 make libxc -j4
-grep -rl -- "-mcmodel=medium" . | xargs sed -i "s/-mcmodel=medium/-mcmodel=small/g"
+[ "$(arch)" == "aarch64" ] && grep -rl -- "-mcmodel=medium" . | xargs sed -i "s/-mcmodel=medium/-mcmodel=small/g"
 make modules
 make
