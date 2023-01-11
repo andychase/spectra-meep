@@ -7,14 +7,15 @@ RUN apt-get update && apt-get install -y \
     swapspace \
     libpq-dev
 
+# Set up gamess
 WORKDIR /app/gamess_linux
 COPY build.sh .
 RUN bash build.sh
-WORKDIR /app
 
+# Set up python supervisor
+WORKDIR /app
 COPY src/requirements.txt src/requirements.txt
 RUN pip3 install -r src/requirements.txt
-
 COPY src src
 
 CMD [ "python3", "./src/aws.py"]
