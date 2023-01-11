@@ -28,7 +28,7 @@ def aws_loop(_dir):
     # If min_length environ added, append sql
     min_length_sql = ""
     if os.environ.get("MIN_LENGTH"):
-        min_length_sql = f"""and name_length > {int(os.environ["MIN_LENGTH"])}"""
+        min_length_sql = f"""and name_length >= {int(os.environ["MIN_LENGTH"])}"""
     for cur in with_conn():
         cur.execute(f"""
             SELECT name, save_uuid, gms_input

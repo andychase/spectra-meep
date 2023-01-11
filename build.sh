@@ -1,3 +1,5 @@
+set -e
+set -x
 apt-get update &&  \
     apt-get install -y \
     build-essential \
@@ -6,11 +8,12 @@ apt-get update &&  \
 [ "$(arch)" == "aarch64" ] && mv install.arm64.info install.info
 make clean
 find . -name "*.o" -type f -delete
-csh ./tools/lapack/download-lapack.csh 
+csh ./tools/lapack/download-lapack.csh
 make -j4 lapack
 sed -i 's/uname -p/uname -m/g' ./ddi/compddi
-csh ../ddi/compddi
+csh ./ddi/compddi
 cp ./ddi/ddikick.x .
 make libxc -j4
+grep -rl -- "-mcmodel=medium" . | xargs sed -i "s/-mcmodel=medium/-mcmodel=small/g"
 make modules
 make
