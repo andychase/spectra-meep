@@ -1,22 +1,15 @@
 FROM python:3.8-slim-bullseye
-WORKDIR /app
 
-COPY gamess_linux gamess_linux
+COPY gamess_linux /app/gamess_linux
 
-RUN apt-get update &&  \
-    apt-get install -y \
+RUN apt-get update && apt-get install -y \
     software-properties-common \
-    build-essential \
     swapspace \
-    libpq-dev \
-    csh gfortran libatlas-base-dev libxc-dev curl cmake
+    libpq-dev
 
 WORKDIR /app/gamess_linux
-RUN bash -c '[ $(arch) == "aarch64" ] && mv install.arm64.info install.info'
-RUN make clean
-RUN make libxc -j4
-RUN make modules
-RUN make
+COPY build.sh .
+RUN bash build.sh
 WORKDIR /app
 
 COPY src/requirements.txt src/requirements.txt

@@ -2,15 +2,10 @@ import pathlib
 import time
 
 from utils import run_gamess
-from utils.inchi_to_gamess_format import inchi_to_gamess
-
-
-def run_single(gms_input, _dir):
-    completed_ok, punch_files, logfiles = run_gamess.run_with_input(gms_input, _dir)
-    exit(0 if completed_ok else 1)
 
 
 def run_simulations(chem):
+    from utils.inchi_to_gamess_format import inchi_to_gamess
     start_time = time.monotonic()
     _dir = pathlib.Path("/tmp/spectra_meep")
     ff_input = inchi_to_gamess(chem)

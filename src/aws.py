@@ -1,10 +1,16 @@
 import multiprocessing
+import os
 import pathlib
 import uuid
 
-import main
+from utils import run_gamess
 from utils.db import with_conn, get_s3_client
 from utils.run_utils import compress_and_clean_dir
+
+
+def run_single(gms_input, _dir):
+    completed_ok, punch_files, logfiles = run_gamess.run_with_input(gms_input, _dir)
+    exit(0 if completed_ok else 1)
 
 
 def update_time(cur, name):
@@ -19,8 +25,12 @@ def aws_loop(_dir):
     # Connect to database and get job
     name = None
     gms_input = None
+    # If min_length environ added, append sql
+    min_length_sql = ""
+    if os.environ.get("MIN_LENGTH"):
+        min_length_sql = f"""and name_length > {int(os.environ["MIN_LENGTH"])}"""
     for cur in with_conn():
-        cur.execute("""
+        cur.execute(f"""
             SELECT name, save_uuid, gms_input
             from meepdb.chem c
             where (
@@ -28,6 +38,7 @@ def aws_loop(_dir):
                     last_activity < now() - interval '15 minutes'
                 )
               and is_done is FALSE
+              {min_length_sql}
             order by name_length
             limit 1 FOR UPDATE;
             """)
@@ -41,7 +52,7 @@ def aws_loop(_dir):
         # Set last_activity to lock it
         update_time(cur, name)
 
-    p = multiprocessing.Process(target=main.run_single, args=(gms_input, _dir))
+    p = multiprocessing.Process(target=run_single, args=(gms_input, _dir))
     p.start()
     while True:
         p.join(60)
