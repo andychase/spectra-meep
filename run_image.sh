@@ -23,8 +23,8 @@ python3 -m pip install awscli
 mkdir ~/.aws || true
 cat << EOF > ~/.aws/credentials
 [default]
-aws_access_key_id = AKIAWA6XZ6MIX5AAXYU5
-aws_secret_access_key = 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
+aws_access_key_id = <Key here>
+aws_secret_access_key = <Secret here>
 EOF
 python3 -m awscli ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 414380061457.dkr.ecr.us-east-1.amazonaws.com
 docker pull 414380061457.dkr.ecr.us-east-1.amazonaws.com/spectra_meep
