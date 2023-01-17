@@ -28,4 +28,4 @@ aws_secret_access_key = <Secret here>
 EOF
 python3 -m awscli ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 414380061457.dkr.ecr.us-east-1.amazonaws.com
 docker pull 414380061457.dkr.ecr.us-east-1.amazonaws.com/spectra_meep
-docker run 414380061457.dkr.ecr.us-east-1.amazonaws.com/spectra_meep bash -c "while true; do python ./src/aws.py; sleep 10; done"
+docker run -d 414380061457.dkr.ecr.us-east-1.amazonaws.com/spectra_meep bash -c "while true; do python ./src/aws.py; sleep 10; done"
