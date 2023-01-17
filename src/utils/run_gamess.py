@@ -9,6 +9,8 @@ import uuid
 from utils.run_ff import FFException, FFKnownException, FFBasisException, FFBadMultException
 
 gamess_path = pathlib.Path(__file__).parent.parent.parent / "gamess_linux"
+if os.name == 'nt':
+    gamess_path = pathlib.Path("C:\\Users\\Public\\gamess-64")
 
 
 def _run(_dir, _input):
@@ -25,7 +27,7 @@ def _run(_dir, _input):
     [_.mkdir(exist_ok=True) for _ in (restart, scratch, input_dir, output_dir)]
     input_file = input_dir / "input.inp"
     logfile = output_dir / f"LOGFILE_{uuid.uuid4()}"
-    cpus = subprocess.check_output(["nproc"], text=True).strip()
+    cpus = str(os.cpu_count())
     if restart.exists():
         shutil.rmtree(restart)
         restart.mkdir()
@@ -39,16 +41,24 @@ SCRATCHDIR={scratch.absolute()}
 
     with open(input_file, "w") as f:
         f.write(_input)
-    with open(logfile, "w") as f:
+    if os.name == 'nt':
         subprocess.run(
-            [
-                "csh", gamess_path / "rungms", input_file, "2022.2", cpus, "1", "0"
-            ],
+            [gamess_path / "rungms.bat", input_file, "2022.R2.intel", cpus, logfile.absolute()],
             check=True,
-            stdout=f,
+            stdout=sys.stdout,
             stderr=sys.stderr,
             cwd=_dir
         )
+    else:
+        with open(logfile, "w") as f:
+            subprocess.run(
+                ["csh", gamess_path / "rungms", input_file, "2022.2", cpus, "1", "0"],
+                check=True,
+                stdout=f,
+                stderr=sys.stderr,
+                cwd=_dir
+            )
+
     with open(logfile) as f:
         log = f.read()
         if "CHECK YOUR INPUT CHARGE AND MULTIPLICITY" in log:

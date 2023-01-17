@@ -1,6 +1,7 @@
 import multiprocessing
 import os
 import pathlib
+import tempfile
 import uuid
 
 from utils import run_gamess
@@ -91,4 +92,8 @@ def aws_loop(_dir):
 
 
 if __name__ == "__main__":
-    aws_loop(pathlib.Path("/tmp/spectra_meep"))
+    if os.name == 'nt':
+        with tempfile.TemporaryDirectory() as _dir:
+            aws_loop(pathlib.Path(_dir))
+    else:
+        aws_loop(pathlib.Path("/tmp/spectra_meep"))
