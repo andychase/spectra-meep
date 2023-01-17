@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y \
 
 # Set up gamess
 WORKDIR /app/gamess_linux
-COPY build.sh .
+COPY script/build.sh .
 RUN bash build.sh
 
 # Set up python supervisor
