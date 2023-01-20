@@ -1,7 +1,10 @@
+import argparse
+import logging
 import multiprocessing
 import os
 import pathlib
 import tempfile
+import time
 import uuid
 
 from utils import run_gamess
@@ -22,7 +25,7 @@ def update_time(cur, name):
     """, (name,))
 
 
-def aws_loop(_dir):
+def aws_loop(_dir, chem_name_override=None):
     # Connect to database and get job
     name = None
     gms_input = None
@@ -31,22 +34,25 @@ def aws_loop(_dir):
     if os.environ.get("MIN_LENGTH"):
         min_length_sql = f"""and name_length >= {int(os.environ["MIN_LENGTH"])}"""
     for cur in with_conn():
-        cur.execute(f"""
-            SELECT name, save_uuid, gms_input
-            from meepdb.chem c
-            where (
-                    last_activity is null or
-                    last_activity < now() - interval '15 minutes'
-                )
-              and is_done is FALSE
-              {min_length_sql}
-            order by name_length
-            limit 1 FOR UPDATE;
-            """)
+        if not chem_name_override:
+            cur.execute(f"""
+                SELECT name, gms_input
+                from meepdb.chem c
+                where (
+                        last_activity is null or
+                        last_activity < now() - interval '15 minutes'
+                    )
+                  and is_done is FALSE
+                  {min_length_sql}
+                order by name_length
+                limit 1 FOR UPDATE;
+                """)
+        else:
+            cur.execute("SELECT name, gms_input from meepdb.chem where name = %s", (chem_name_override,))
         result = cur.fetchone()
         if not result:
             raise Exception("No result set returned!")
-        name, save_uuid, gms_input = result
+        name, gms_input = result
         print("----~~~----")
         print(name)
         print("----~~~----")
@@ -91,9 +97,31 @@ def aws_loop(_dir):
     # Re-start from checkpoint
 
 
+def main():
+    parser = argparse.ArgumentParser(
+        prog='SpectraMeep AWS',
+        description='This program runs the gamess program using information from a database')
+    parser.add_argument('-l', '--loop', action='store_true', help="Run continuously")
+    parser.add_argument('-c', '--chem', default='', help="Specify specific chemical InChI to use and do not "
+                                                         "lock record in database")
+    args = parser.parse_args()
+    loop_forever = args.loop
+    chem_name_override = args.chem
+    while True:
+        error = False
+        # noinspection PyBroadException
+        # Catch everything
+        try:
+            with tempfile.TemporaryDirectory() as _dir:
+                aws_loop(pathlib.Path(_dir), chem_name_override)
+        except Exception:
+            logging.exception("Error in processing")
+            error = True
+        if not loop_forever:
+            exit(int(error))
+        else:
+            time.sleep(10)
+
+
 if __name__ == "__main__":
-    if os.name == 'nt':
-        with tempfile.TemporaryDirectory() as _dir:
-            aws_loop(pathlib.Path(_dir))
-    else:
-        aws_loop(pathlib.Path("/tmp/spectra_meep"))
+    main()
