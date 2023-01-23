@@ -3,6 +3,14 @@
 # N. M. O'Boyle, A. L. Tenderholt and K. M. Langner. J. Comp. Chem., 2008, 29, 839-845
 import math
 import numpy
+from cclib.parser import ccopen
+
+
+def simple_parse(_input):
+    logfile = ccopen(_input).parse()
+    act = logfile.vibramans
+    freq = logfile.vibfreqs.copy()
+    return list(zip(act, freq))
 
 
 def activity_to_intensity(activity, frequency, excitation, temperature):

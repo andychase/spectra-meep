@@ -15,12 +15,11 @@ def main(uuid_id):
         s3.download_fileobj('spectrameep', uuid_id + ".tar.gz", f)
         f.seek(0)
         tar = TarFile.open(mode='r:gz', fileobj=f)
-        listings = list(tar.getmembers())
-        for listing in listings:
-            if "LOGFILE_" in listing.name:
-                file = tar.extractfile(listing)
-                out_f.write(file.read())
+        listings = list(listing for listing in tar.getmembers() if "LOGFILE_" in listing.name)
+        listings.sort(key=lambda _: _.mtime, reverse=True)
+        file = tar.extractfile(listings[0])
+        return file.read().decode("utf-8")
 
 
 if __name__ == "__main__":
-    main(sys.argv[1])
+    print(main(sys.argv[1]))
