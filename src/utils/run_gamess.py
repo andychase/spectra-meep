@@ -27,7 +27,7 @@ def _run(_dir, _input):
     [_.mkdir(exist_ok=True) for _ in (restart, scratch, input_dir, output_dir)]
     input_file = input_dir / "input.inp"
     logfile = output_dir / f"LOGFILE_{uuid.uuid4()}"
-    cpus = str(os.cpu_count())
+    cpus = str(len(os.sched_getaffinity(0)) if os.name != 'nt' else os.cpu_count())
     if restart.exists():
         shutil.rmtree(restart)
         restart.mkdir()
