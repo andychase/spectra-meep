@@ -6,3 +6,4 @@ python-dotenv
 psycopg
 boto3
 tqdm
+cclib

@@ -1,15 +1,15 @@
 # Code from Gaussum
 # License: GPL
 # N. M. O'Boyle, A. L. Tenderholt and K. M. Langner. J. Comp. Chem., 2008, 29, 839-845
+import logging
 import math
-import numpy
-from cclib.parser import ccopen
+from io import StringIO
 
+import numpy
+from cclib.parser import ADF, GAMESS, Gaussian, ccopen
 
 def simple_parse(_input):
-    logfile = ccopen(_input).parse()
-    act = logfile.vibramans
-    freq = logfile.vibfreqs.copy()
+    get_raman_intensity_from_log(logfile)
     return list(zip(act, freq))
 
 
@@ -60,6 +60,58 @@ def get_raman_intensity_from_log(
     ]
     spectrum_intensity = Spectrum(start, end, numpts, [list(zip(freq, intensity))], FWHM, lorentzian)
     return zip(spectrum_intensity.xvalues, spectrum_intensity.spectrum[:, 0])
+
+
+def produce_raman_spectrum_file(_input):
+    try:
+        parser = GAMESS(_input)
+        logfile = parser.parse()
+        act = logfile.vibramans.copy()
+        freq = logfile.vibfreqs.copy()
+    except Exception:
+        logging.exception("Error parsing")
+        raise
+
+
+    if hasattr(logfile, "vibsyms"):
+        vibsyms = logfile.vibsyms
+    else:
+        vibsyms = ['?'] * len(freq)
+    name = "RAMAN Intensity"
+    numpts = 500
+    start, end = 0, 4000
+    FWHM = 10
+    scalefactor = 1
+    scale = [scalefactor] * len(freq)
+    excitation = 785
+    temperature = 293.15
+
+    spectrum = Spectrum(start, end, numpts,
+                        [list(zip(freq, act))],
+                        FWHM, lorentzian)
+    intensity = [activity_to_intensity(activity, frequency, excitation, temperature)
+                 for activity, frequency in zip(act, freq)]
+    spectrum_intensity = Spectrum(start, end, numpts,
+                                  [list(zip(freq, intensity))],
+                                  FWHM, lorentzian)
+
+    outputfile = StringIO()
+    outputfile.write("Wavenumber (cm-1)\tIntensity (a.u.)\n")
+    width = end - start
+    for x in range(0, numpts):
+        if spectrum.spectrum[x, 0] < 1e-20:
+            spectrum.spectrum[x, 0] = 0.
+        realx = width * (x + 1) / numpts + start
+        outputfile.write(str(realx) + "\t" + str(spectrum_intensity.spectrum[x, 0]))
+        # if name == "Raman":
+        #     outputfile.write("\t%f" % spectrum_intensity.spectrum[x, 0])
+        # if x < len(freq):  # Write the activities (assumes more pts to plot than freqs - fix this)
+        #     outputfile.write("\t\t" + str(x + 1) + "\t" + vibsyms[x] + "\t" + str(freq[x]) + "\t" + str(act[x]))
+        #     if name == "Raman":
+        #         outputfile.write("\t%f" % intensity[x])
+        # outputfile.write("\t" + str(scale[x]) + "\t" + str(logfile.vibfreqs[x]))
+        outputfile.write("\n")
+    return outputfile
 
 
 def plot(spec):
@@ -123,3 +175,4 @@ class Spectrum(object):
             for spectrumno in range(len(peaks)):
                 for (pos, height) in peaks[spectrumno]:
                     self.spectrum[i, spectrumno] = self.spectrum[i, spectrumno] + formula(x, pos, height, width)
+
